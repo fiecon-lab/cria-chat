@@ -385,10 +385,10 @@ function configureDocContentCheckbox() {
     docContentCheckbox.checked = false;
     if (docContentLabel) {
       docContentLabel.style.color = '#999';
-      docContentLabel.textContent = 'Document content not available in Excel';
+      docContentLabel.textContent = 'Document content not yet available in Excel';
     }
     if (docAccessHint) {
-      docAccessHint.textContent = 'Document content access is not available in Excel.';
+      docAccessHint.textContent = 'Document content access is not yet available in Excel.';
     }
   } else if (officeAppType === Office.HostType.Word) {
     // Enable the checkbox in Word
@@ -635,10 +635,11 @@ async function getDocumentContent() {
             const selection = context.document.getSelection();
             selection.load("text");
             
-            // Load the body with paragraphs to preserve structure
+            // Load the body with paragraphs but without list properties initially
+            // This avoids the ItemNotFound error
             const body = context.document.body;
             const paragraphs = body.paragraphs;
-            paragraphs.load(["text", "listItem", "listOrNullObject", "style"]);
+            paragraphs.load("text");
             
             await context.sync();
             
@@ -654,115 +655,58 @@ async function getDocumentContent() {
               content += `## Selected Text: ${selection.text}\n\n`;
             }
             
-            // Process paragraphs with structure preservation
+            // Process paragraphs with basic formatting
             content += `## Document Content:\n`;
             
-            // Track list levels and numbering for proper formatting
-            let currentListId = null;
-            let currentListLevel = 0;
-            let listNumbering = {}; // Track numbering for each list level
-            
+            // Simple approach that doesn't rely on list properties
             for (let i = 0; i < paragraphs.items.length; i++) {
               const paragraph = paragraphs.items[i];
               const text = paragraph.text.trim();
               
               if (!text) continue; // Skip empty paragraphs
               
-              // Check if paragraph is a list item
-              if (paragraph.listItem) {
-                const list = paragraph.listOrNullObject;
-                
-                // Only load list properties if it's a valid list
-                if (!list.isNullObject) {
-                  list.load("id, levelTypes");
-                  await context.sync();
-                  
-                  // Determine list type and level
-                  const listId = list.id;
-                  const level = paragraph.listItem.level;
-                  const levelType = list.levelTypes[level];
-                  const isNumbered = levelType === Word.ListLevelType.numbered;
-                  
-                  // Check if we're in a new list or continuing the current one
-                  if (listId !== currentListId) {
-                    // Reset numbering for a new list
-                    listNumbering = {};
-                    currentListId = listId;
-                  }
-                  
-                  // Initialize or increment the numbering for this level
-                  if (isNumbered) {
-                    if (!listNumbering[level]) {
-                      listNumbering[level] = 1;
-                    } else {
-                      // Only increment if we're at the same level as before
-                      // If we're at a deeper level, we start at 1
-                      // If we're at a higher level than before, we increment
-                      if (level === currentListLevel) {
-                        listNumbering[level]++;
-                      }
-                    }
-                    
-                    // Reset numbering for deeper levels when level changes
-                    if (level < currentListLevel) {
-                      for (let j = level + 1; j <= currentListLevel; j++) {
-                        listNumbering[j] = 0;
-                      }
-                    }
-                  }
-                  
-                  currentListLevel = level;
-                  
-                  // Adjust indentation based on list level
-                  const indent = "  ".repeat(level);
-                  
-                  // Format based on list type
-                  if (isNumbered) {
-                    // For numbered lists, use the actual number we've calculated
-                    content += `${indent}${listNumbering[level]}. ${text}\n`;
-                  } else {
-                    // For bullet lists, use "- " format
-                    content += `${indent}- ${text}\n`;
-                  }
-                } else {
-                  // Fallback for list items without list info
-                  // Check if the text already starts with a bullet or number
-                  const startsWithBullet = /^[-•·○◦*]\s/.test(text);
-                  const startsWithNumber = /^\d+[.)]\s/.test(text);
-                  
-                  if (startsWithBullet) {
-                    content += `- ${text.replace(/^[-•·○◦*]\s/, '')}\n`;
-                  } else if (startsWithNumber) {
-                    content += `${text}\n`;
-                  } else {
-                    content += `- ${text}\n`;
-                  }
-                }
+              // Check if the text already starts with a bullet or number
+              const startsWithBullet = /^[-•·○◦*]\s/.test(text);
+              const startsWithNumber = /^\d+[.)]\s/.test(text);
+              
+              if (startsWithBullet) {
+                content += `- ${text.replace(/^[-•·○◦*]\s/, '')}\n`;
+              } else if (startsWithNumber) {
+                content += `${text}\n`;
               } else {
-                // Regular paragraph
-                // Check if the text already starts with a bullet or number
-                const startsWithBullet = /^[-•·○◦*]\s/.test(text);
-                const startsWithNumber = /^\d+[.)]\s/.test(text);
-                
-                if (startsWithBullet) {
-                  content += `- ${text.replace(/^[-•·○◦*]\s/, '')}\n`;
-                } else if (startsWithNumber) {
-                  content += `${text}\n`;
-                } else {
-                  content += `${text}\n`;
-                }
-                
-                // Reset list tracking when we hit a non-list paragraph
-                currentListId = null;
-                currentListLevel = 0;
-                listNumbering = {};
+                content += `${text}\n`;
               }
             }
             
             resolve(content);
           } catch (error) {
             console.error("Error in Word.run:", error);
-            resolve("");
+            
+            // Fallback approach if the main approach fails
+            try {
+              // Get just the document text without trying to preserve formatting
+              const body = context.document.body;
+              body.load("text");
+              const selection = context.document.getSelection();
+              selection.load("text");
+              
+              await context.sync();
+              
+              let fallbackContent = "";
+              
+              // Add selection if available
+              if (selection.text && selection.text.trim().length > 0) {
+                fallbackContent += `## Selected Text: ${selection.text}\n\n`;
+              }
+              
+              // Add body text
+              fallbackContent += `## Document Content:\n${body.text}\n`;
+              
+              resolve(fallbackContent);
+            } catch (fallbackError) {
+              console.error("Fallback approach also failed:", fallbackError);
+              resolve("Error retrieving document content. Please try again or select specific text.");
+            }
           }
         }).catch(error => {
           console.error("Error getting Word content:", error);
@@ -1723,7 +1667,7 @@ function formatConversationForAPI(history, documentContent = "") {
     if (officeAppType === Office.HostType.PowerPoint) {
       prefix = "# Attached slide:\n";
     }
-    formattedPrompt += `\n${prefix} s${documentContent}\n\n`;
+    formattedPrompt += `\n${prefix}${documentContent}\n\n`;
   }
   console.log(formattedPrompt);
   return formattedPrompt;
