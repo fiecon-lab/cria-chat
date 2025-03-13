@@ -4,7 +4,7 @@
   <Version>1.0.0.1</Version>
   <ProviderName>FIECON Labs</ProviderName>
   <DefaultLocale>en-gb</DefaultLocale>
-  <DisplayName DefaultValue="Cria chat"/>
+  <DisplayName DefaultValue="Ask Cria"/>
   <Description DefaultValue="A document preparation tool for NICE submissions with blinding and abbreviation features"/>
   <IconUrl DefaultValue="https://fiecon-lab.github.io/cria-chat/images/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://fiecon-lab.github.io/cria-chat/images/icon-64.png"/>
