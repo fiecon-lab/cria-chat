@@ -316,3 +316,18 @@ pre[class*="language-"] {
   font-family: var(--bs-font-monospace);
   font-size: 0.9em;
 }
+
+/* Document content checkbox styling */
+#doc-content:disabled + label {
+  color: #999;
+  cursor: not-allowed;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+}
+
+#doc-access-hint {
+  font-style: italic;
+}
