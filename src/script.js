@@ -213,7 +213,8 @@ const chatMessages = document.getElementById('chat-messages');
 const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
 const typingIndicator = document.getElementById('typing-indicator');
-const newChatButton = document.getElementById('new-chat-button');
+const newChatButtonDesktop = document.getElementById('new-chat-button-desktop');
+const newChatButtonMobile = document.getElementById('new-chat-button-mobile');
 const docContentCheckbox = document.getElementById('doc-content');
 const docContentLabel = document.querySelector('label[for="doc-content"]');
 const docAccessHint = document.getElementById('doc-access-hint');
@@ -468,7 +469,8 @@ messageInput.addEventListener('keypress', function(e) {
 });
 
 // Start new conversation on button click
-newChatButton.addEventListener('click', startNewConversation);
+newChatButtonDesktop.addEventListener('click', startNewConversation);
+newChatButtonMobile.addEventListener('click', startNewConversation);
 
 // Add event listener for the document content checkbox
 docContentCheckbox.addEventListener('change', function() {
