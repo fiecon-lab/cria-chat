@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "qn52tobdm0");
+    </script>
+    
+    <!-- Office.js reference -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Add marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <link href="src/styles.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container-fluid p-0 h-100">
+      <div class="chat-container">
+        <div class="header d-flex flex-row justify-content-between align-items-center py-2">
+          <div class="form-check">
+            <input class="form-check-input me-2" type="checkbox" value="" id="doc-content">
+            <label class="form-check-label fs-6 small" for="doc-content">
+              Allow access to the document
+            </label>
+            <span id="doc-content-indicator" class="ms-2 badge bg-success d-none">Document content enabled</span>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="https://cria.fiecon.com/" target="_blank" class="btn btn-secondary btn-sm d-none d-sm-block">
+              Open browser
+            </a>
+            <a href="https://cria.fiecon.com/" target="_blank" class="btn btn-secondary btn-sm d-block d-sm-none" title="Open browser">
+              <i class="bi bi-globe"></i>
+            </a>
+            
+            <button id="new-chat-button-desktop" class="btn btn-primary btn-sm d-none d-sm-block">
+              <i class="bi bi-plus-circle me-1"></i>New chat
+            </button>
+            <button id="new-chat-button-mobile" class="btn btn-primary btn-sm d-block d-sm-none" title="New chat">
+              <i class="bi bi-plus-circle"></i>
+            </button>
+          </div>
+        </div>
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="input-container">
+          <div id="typing-indicator" class="typing-indicator">
+            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Cria is thinking...
+          </div>
+          <div class="input-area">
+            <textarea id="message-input" class="form-control" placeholder="Type here..." rows="1"></textarea>
+            <button id="send-button" class="btn btn-success">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+          <div class="format-hint"><strong>Always verify important information.</strong> <span id="doc-access-hint">Check "Allow access to the document" to include document content in your conversation.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/components/prism-markup.min.js"></script>
+    <script src="src/config.js"></script>
+    <script src="src/script.js"></script>
+  </body>
+</html>
+
+    
+    
