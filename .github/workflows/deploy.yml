@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   update-config:
     runs-on: ubuntu-latest
@@ -19,5 +22,5 @@ jobs:
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add src/config.js
-          git commit -m "Update API key in config"
-          git push 
+          git commit -m "Update API key in config" || echo "No changes to commit"
+          git push || echo "No changes to push" 

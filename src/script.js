@@ -221,8 +221,13 @@ const docAccessHint = document.getElementById('doc-access-hint');
 
 // API details
 const API_URL = "https://cria-api.fiecon.com/api/generate";
-const API_KEY = config.API_KEY;
+const API_KEY = typeof config !== 'undefined' ? config.API_KEY : '';
 const API_MODEL = "llama3.2-vision:latest";
+
+// Add error handling for missing API key
+if (!API_KEY) {
+  console.error('API key not found. Please ensure config.js is loaded properly.');
+}
 
 // Welcome message text
 const WELCOME_MESSAGE = "How can I assist you today?";
