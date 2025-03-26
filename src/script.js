@@ -312,8 +312,6 @@ function generateSystemPrompt() {
     } else if (officeAppType === Office.HostType.Excel) {
       prompt += ` The user is currently working in Microsoft Excel. It is happy to help with data analysis, formulas, and VBA code.`;
     } 
-  } else {
-    prompt += ` It is happy to help with health economics analyses, healthcare value assessments, market access strategies, and health technology assessments.`;
   }
   
   // Add final part of the prompt
