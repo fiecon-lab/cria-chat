@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
-  <Id>1b7efeb3-a95d-42db-b5ee-dcc1de1f2fba</Id>
-  <Version>1.0.0.1</Version>
+  <Id>3a4e8c97-5f2d-41b6-9d7e-8b2f6c0d1e3a</Id>
+  <Version>1.0.1.0</Version>
   <ProviderName>FIECON Labs</ProviderName>
   <DefaultLocale>en-gb</DefaultLocale>
   <DisplayName DefaultValue="Ask Cria"/>
@@ -169,7 +169,7 @@
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Ask Cria to assist you with your tasks, directly in your Office tools"/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Use the power of AI to support you with day-to-day tasks"/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Use the power of AI to support you with day-to-day tasks. Share content of your documents to help with your tasks."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

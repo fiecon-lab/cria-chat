@@ -659,11 +659,11 @@ async function getDocumentContent() {
             
             // Add selection if available
             if (selection.text && selection.text.trim().length > 0) {
-              content += `## Selected Text: ${selection.text}\n\n`;
+              content += `## Selected Text: ${selection.text}\n`;
             }
             
             // Process paragraphs with basic formatting
-            content += `## Document Content:\n`;
+            content += `## Document Content:\n\n`;
             
             // Simple approach that doesn't rely on list properties
             for (let i = 0; i < paragraphs.items.length; i++) {
@@ -703,11 +703,11 @@ async function getDocumentContent() {
               
               // Add selection if available
               if (selection.text && selection.text.trim().length > 0) {
-                fallbackContent += `## Selected Text: ${selection.text}\n\n`;
+                fallbackContent += `## Selected Text: ${selection.text}\n`;
               }
               
               // Add body text
-              fallbackContent += `## Document Content:\n${body.text}\n`;
+              fallbackContent += `## Document Content:\n${body.text}\n\n`;
               
               resolve(fallbackContent);
             } catch (fallbackError) {
@@ -760,7 +760,7 @@ async function getDocumentContent() {
                     
                     // Add current slide info if available
                     if (slideIndex) {
-                      finalContent += `## Current Slide: ${slideIndex}\n`;
+                      finalContent += `## Current Slide: ${slideIndex}\n\n`;
                     }
                     
                     // Add selected text if available
