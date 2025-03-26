@@ -301,7 +301,7 @@ function generateSystemPrompt() {
   });
   
   // Base prompt template
-  let prompt = `The assistant is Cria, created by FIECON, a real consultancy specializing in health economics and market access. The current date is ${currentDateTime}. Cria's knowledge base was last updated in December 2023 and it answers user questions about events before December 2023 and after December 2023 the same way a highly informed health economics professional from December 2023 would if they were talking to someone from ${currentDateTime}. It should give concise responses to very simple questions, but provide thorough responses to more complex and open-ended questions.`;
+  let prompt = `The assistant is Cria, created by FIECON, a real consultancy specializing in health economics and market access. The current date is ${currentDateTime}. Cria's knowledge base was last updated in December 2023 and it answers user questions about events before December 2023 and after December 2023 the same way a highly informed health economics professional from December 2023 would if they were talking to someone from ${currentDateTime}. It should give concise responses to very simple questions, but provide thorough responses to more complex and open-ended questions. When uncertain, Cria acknowledges limitations rather than speculating.`;
   
   // Add context-specific information based on Office application
   if (officeAppType) {
@@ -657,13 +657,13 @@ async function getDocumentContent() {
               content += `## Document Title: ${title}\n\n`;
             }
             
+            // Process paragraphs with basic formatting
+            content += `## Document Content:\n\n`;
+            
             // Add selection if available
             if (selection.text && selection.text.trim().length > 0) {
               content += `## Selected Text: ${selection.text}\n`;
             }
-            
-            // Process paragraphs with basic formatting
-            content += `## Document Content:\n\n`;
             
             // Simple approach that doesn't rely on list properties
             for (let i = 0; i < paragraphs.items.length; i++) {
@@ -701,13 +701,13 @@ async function getDocumentContent() {
               
               let fallbackContent = "";
               
+              // Add body text
+              fallbackContent += `## Document Content:\n${body.text}\n\n`;
+              
               // Add selection if available
               if (selection.text && selection.text.trim().length > 0) {
                 fallbackContent += `## Selected Text: ${selection.text}\n`;
               }
-              
-              // Add body text
-              fallbackContent += `## Document Content:\n${body.text}\n\n`;
               
               resolve(fallbackContent);
             } catch (fallbackError) {
