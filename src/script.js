@@ -222,7 +222,7 @@ const docAccessHint = document.getElementById('doc-access-hint');
 // API details
 const API_URL = "https://cria-api.fiecon.com/api/generate";
 const API_KEY = typeof config !== 'undefined' ? config.API_KEY : '';
-const API_MODEL = "llama3.2-vision:latest";
+const API_MODEL = "mistral:7b";
 
 // Add error handling for missing API key
 if (!API_KEY) {
