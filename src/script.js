@@ -655,31 +655,32 @@ async function getDocumentContent() {
               content += `## Document Title: ${title}\n\n`;
             }
             
-            // Process paragraphs with basic formatting
-            content += `## Document Content:\n\n`;
-            
-            // Add selection if available
+            // Check if there's selected text
             if (selection.text && selection.text.trim().length > 0) {
+              // If there's selected text, only include that
               content += `## Selected Text: ${selection.text}\n`;
-            }
-            
-            // Simple approach that doesn't rely on list properties
-            for (let i = 0; i < paragraphs.items.length; i++) {
-              const paragraph = paragraphs.items[i];
-              const text = paragraph.text.trim();
+            } else {
+              // If no text is selected, include the full document content
+              content += `## Document Content:\n\n`;
               
-              if (!text) continue; // Skip empty paragraphs
-              
-              // Check if the text already starts with a bullet or number
-              const startsWithBullet = /^[-•·○◦*]\s/.test(text);
-              const startsWithNumber = /^\d+[.)]\s/.test(text);
-              
-              if (startsWithBullet) {
-                content += `- ${text.replace(/^[-•·○◦*]\s/, '')}\n`;
-              } else if (startsWithNumber) {
-                content += `${text}\n`;
-              } else {
-                content += `${text}\n`;
+              // Simple approach that doesn't rely on list properties
+              for (let i = 0; i < paragraphs.items.length; i++) {
+                const paragraph = paragraphs.items[i];
+                const text = paragraph.text.trim();
+                
+                if (!text) continue; // Skip empty paragraphs
+                
+                // Check if the text already starts with a bullet or number
+                const startsWithBullet = /^[-•·○◦*]\s/.test(text);
+                const startsWithNumber = /^\d+[.)]\s/.test(text);
+                
+                if (startsWithBullet) {
+                  content += `- ${text.replace(/^[-•·○◦*]\s/, '')}\n`;
+                } else if (startsWithNumber) {
+                  content += `${text}\n`;
+                } else {
+                  content += `${text}\n`;
+                }
               }
             }
             
@@ -699,12 +700,18 @@ async function getDocumentContent() {
               
               let fallbackContent = "";
               
-              // Add body text
-              fallbackContent += `## Document Content:\n${body.text}\n\n`;
+              // Add title if available
+              if (title) {
+                fallbackContent += `## Document Title: ${title}\n\n`;
+              }
               
-              // Add selection if available
+              // Check if there's selected text
               if (selection.text && selection.text.trim().length > 0) {
+                // If there's selected text, only include that
                 fallbackContent += `## Selected Text: ${selection.text}\n`;
+              } else {
+                // If no text is selected, include the full document content
+                fallbackContent += `## Document Content:\n${body.text}\n`;
               }
               
               resolve(fallbackContent);
