@@ -223,6 +223,7 @@ pre[class*="language-"] {
 
 #message-input {
   flex-grow: 1;
+  padding: 11px 12px;
   border: 1px solid #dee2e6;
   border-radius: 24px;
   resize: none;
