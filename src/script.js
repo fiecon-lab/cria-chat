@@ -208,6 +208,14 @@ let conversationHistory = [];
 // Office application type
 let officeAppType = null;
 
+// Range selection tracking
+let lastSelectedRange = null;
+let lastInputModification = null;
+let rangeSelectionHandler = null;
+
+// Add storage for range data
+let rangeDataMap = new Map();
+
 // DOM elements
 const chatMessages = document.getElementById('chat-messages');
 const messageInput = document.getElementById('message-input');
@@ -221,7 +229,7 @@ const docAccessHint = document.getElementById('doc-access-hint');
 
 // API details
 const API_URL = "https://cria-api.fiecon.com/api/generate";
-const API_KEY = typeof config !== 'undefined' ? config.API_KEY : '';
+const API_KEY = "1814f253-ba74-4392-8deb-844ca5ee3fc"; //typeof config !== 'undefined' ? config.API_KEY : '';
 const API_MODEL = "llama3.2-vision:latest";
 
 // Add error handling for missing API key
@@ -231,6 +239,9 @@ if (!API_KEY) {
 
 // Welcome message text
 const WELCOME_MESSAGE = "How can I assist you today?";
+
+// Add variable for tracking user input
+let userHasTyped = true; // Start as true to handle initial state
 
 // ===== LANGUAGE UTILITIES =====
 
@@ -351,10 +362,88 @@ window.onload = function() {
   // Initialize Office.js
   if (typeof Office !== 'undefined') {
     Office.onReady(function(info) {
+      console.log("Office.js is ready, application type:", info.host);
       officeAppType = info.host;
       
       // Configure the document content checkbox based on the Office application
       configureDocContentCheckbox();
+      
+      // Add range selection handler for Excel
+      if (officeAppType === Office.HostType.Excel) {
+        console.log("Setting up Excel range selection handler");
+        
+        rangeSelectionHandler = async function(eventArgs) {
+          console.log("Selection changed event triggered");
+          if (docContentCheckbox && docContentCheckbox.checked) {
+            try {
+              await Excel.run(async (context) => {
+                console.log("Getting selected range");
+                const range = context.workbook.getSelectedRange();
+                range.load(["address", "values", "formulas"]);
+                await context.sync();
+                
+                const newRange = range.address;
+                console.log("New range selected:", newRange);
+                
+                // Format the range for display (remove sheet name if present)
+                const displayRange = newRange.includes('!') ? newRange.split('!')[1] : newRange;
+                console.log("Display range:", displayRange);
+                
+                // Store the range data
+                rangeDataMap.set(displayRange, {
+                  address: newRange,
+                  values: range.values,
+                  formulas: range.formulas
+                });
+                
+                const currentInput = messageInput.value;
+                console.log("Current input:", currentInput, "userHasTyped:", userHasTyped);
+                
+                // Add new range if input is empty or user has typed something
+                if (!currentInput || userHasTyped) {
+                  // Add range at the end with proper spacing
+                  const needsSpace = currentInput && currentInput.charAt(currentInput.length - 1) !== ' ';
+                  const updatedText = currentInput + (needsSpace ? ' ' : '') + `[${displayRange}]`;
+                  messageInput.value = updatedText;
+                  userHasTyped = false; // Reset the flag after adding range
+                } else {
+                  // Update the last range in the message
+                  const rangePattern = /\[([^\]]+)\]/g;
+                  const matches = Array.from(currentInput.matchAll(rangePattern));
+                  if (matches.length > 0) {
+                    const lastMatch = matches[matches.length - 1];
+                    const beforeRange = currentInput.substring(0, lastMatch.index);
+                    const afterRange = currentInput.substring(lastMatch.index + lastMatch[0].length);
+                    messageInput.value = beforeRange + `[${displayRange}]` + afterRange;
+                  } else {
+                    // No range found, add at the end
+                    const needsSpace = currentInput && currentInput.charAt(currentInput.length - 1) !== ' ';
+                    messageInput.value = currentInput + (needsSpace ? ' ' : '') + `[${displayRange}]`;
+                  }
+                }
+                
+                // Auto-resize the input
+                messageInput.style.height = 'auto';
+                messageInput.style.height = (messageInput.scrollHeight) + 'px';
+              });
+            } catch (error) {
+              console.error("Error in range selection handler:", error);
+            }
+          }
+        };
+        
+        // Add selection changed event handler
+        try {
+          Excel.run(async (context) => {
+            console.log("Registering selection changed event");
+            context.workbook.onSelectionChanged.add(rangeSelectionHandler);
+            await context.sync();
+            console.log("Selection changed event registered successfully");
+          });
+        } catch (error) {
+          console.error("Failed to register selection changed event:", error);
+        }
+      }
       
       // Add debug button for PowerPoint
       if (officeAppType === Office.HostType.PowerPoint) {
@@ -393,15 +482,14 @@ function configureDocContentCheckbox() {
   if (!docContentCheckbox) return;
   
   if (officeAppType === Office.HostType.Excel) {
-    // Disable the checkbox in Excel
-    docContentCheckbox.disabled = true;
-    docContentCheckbox.checked = false;
+    // Enable the checkbox in Excel
+    docContentCheckbox.disabled = false;
     if (docContentLabel) {
-      docContentLabel.style.color = '#999';
-      docContentLabel.textContent = 'Document content not yet available in Excel';
+      docContentLabel.style.color = '';
+      docContentLabel.textContent = 'Allow access to the document';
     }
     if (docAccessHint) {
-      docAccessHint.textContent = 'Document content access is not yet available in Excel.';
+      docAccessHint.textContent = 'Check "Allow access to the document" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
     }
   } else if (officeAppType === Office.HostType.Word) {
     // Enable the checkbox in Word
@@ -493,16 +581,39 @@ docContentCheckbox.addEventListener('change', function() {
     if (this.checked && !this.disabled) {
       if (officeAppType === Office.HostType.PowerPoint) {
         docAccessHint.textContent = 'Slide content will be included in your conversation.';
+      } else if (officeAppType === Office.HostType.Excel) {
+        docAccessHint.textContent = 'Selected cells will be included in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
       } else {
         docAccessHint.textContent = 'Document content will be included in your conversation.';
       }
     } else if (!this.disabled) {
       if (officeAppType === Office.HostType.PowerPoint) {
         docAccessHint.textContent = 'Check to include slide content. For best results, select specific text on the slide.';
+      } else if (officeAppType === Office.HostType.Excel) {
+        docAccessHint.textContent = 'Check "Allow access to the document" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
       } else {
         docAccessHint.textContent = 'Check "Allow access to the document" to include document content in your conversation.';
       }
     }
+  }
+  
+  // Remove selection handler if checkbox is unchecked
+  if (!this.checked && rangeSelectionHandler) {
+    Office.context.document.removeHandlerAsync(Office.EventType.BindingSelectionChanged, rangeSelectionHandler);
+    rangeSelectionHandler = null;
+  }
+});
+
+// Add input modification tracking
+messageInput.addEventListener('input', function() {
+  lastInputModification = this.value;
+});
+
+// Add input event listener to track user typing
+messageInput.addEventListener('input', function(e) {
+  // Only set userHasTyped if the change wasn't from our range selection code
+  if (e.inputType === 'insertText' || e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+    userHasTyped = true;
   }
 });
 
@@ -630,7 +741,65 @@ async function getDocumentContent() {
         return;
       }
       
-      if (officeAppType === Office.HostType.Word) {
+      if (officeAppType === Office.HostType.Excel) {
+        // Find all range references in the message
+        const message = messageInput.value;
+        const rangeMatches = message.match(/\[([^\]]+)\]/g);
+        
+        if (!rangeMatches || rangeMatches.length === 0) {
+          resolve("");
+          return;
+        }
+        
+        let content = "";
+        
+        // Process each range
+        for (const rangeMatch of rangeMatches) {
+          const rangeText = rangeMatch.slice(1, -1); // Remove brackets
+          const rangeData = rangeDataMap.get(rangeText);
+          
+          if (rangeData) {
+            // Format the content using the stored data
+            content += `## Range ${rangeData.address}:\n\n`;
+            
+            // Add values
+            if (rangeData.values) {
+              content += "Values:\n";
+              for (const row of rangeData.values) {
+                content += row.map(cell => cell === null ? "" : cell).join("\t") + "\n";
+              }
+              content += "\n";
+            }
+            
+            // Add formulas if they differ from values
+            if (rangeData.formulas) {
+              let hasFormulas = false;
+              for (let i = 0; i < rangeData.formulas.length; i++) {
+                for (let j = 0; j < rangeData.formulas[i].length; j++) {
+                  if (rangeData.formulas[i][j] !== rangeData.values[i][j]) {
+                    hasFormulas = true;
+                    break;
+                  }
+                }
+                if (hasFormulas) break;
+              }
+              
+              if (hasFormulas) {
+                content += "Formulas:\n";
+                for (const row of rangeData.formulas) {
+                  content += row.map(cell => cell === null ? "" : cell).join("\t") + "\n";
+                }
+                content += "\n";
+              }
+            }
+          } else {
+            console.warn("No stored data found for range:", rangeText);
+            content += `Error: Could not access range ${rangeText}\n\n`;
+          }
+        }
+        
+        resolve(content);
+      } else if (officeAppType === Office.HostType.Word) {
         // Get Word document content
         Word.run(async (context) => {
           try {
@@ -1678,19 +1847,39 @@ function formatConversationForAPI(history, documentContent = "") {
   // Add conversation history
   history.forEach(message => {
     const role = message.role === "user" ? "User" : "Assistant";
-    formattedPrompt += `${role}: ${message.content}\n`;
+    let content = message.content;
+    
+    // If this is a user message and we're in Excel, process any range references
+    if (role === "User" && officeAppType === Office.HostType.Excel) {
+      const rangePattern = /\[([^\]]+)\]/g;
+      content = content.replace(rangePattern, (match, range) => {
+        const rangeData = rangeDataMap.get(range);
+        if (rangeData) {
+          // Convert range data to JSON string
+          return JSON.stringify({
+            range: range,
+            address: rangeData.address,
+            values: rangeData.values,
+            formulas: rangeData.formulas
+          });
+        }
+        return match; // Keep original if no data found
+      });
+    }
+    
+    formattedPrompt += `${role}: ${content}\n`;
   });
   
   // Add document content if available
   if (documentContent) {
-    // Toggle prefix based on Office app type
     let prefix = "# Attached document:\n";
     if (officeAppType === Office.HostType.PowerPoint) {
       prefix = "# Attached slide:\n";
     }
     formattedPrompt += `\n${prefix}${documentContent}\n\n`;
   }
-  console.log(formattedPrompt);
+  
+  console.log("Formatted prompt:", formattedPrompt);
   return formattedPrompt;
 }
 
