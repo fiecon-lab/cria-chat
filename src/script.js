@@ -230,7 +230,7 @@ const docAccessHint = document.getElementById('doc-access-hint');
 // API details
 const API_URL = "https://cria-api.fiecon.com/api/generate";
 const API_KEY = "1814f253-ba74-4392-8deb-844ca5ee3fc"; //typeof config !== 'undefined' ? config.API_KEY : '';
-const API_MODEL = "llama3.2-vision:latest";
+const API_MODEL = "qwen3:14b"; //"llama3.2-vision:latest";
 
 // Add error handling for missing API key
 if (!API_KEY) {
@@ -1656,6 +1656,15 @@ function addUserMessage(message) {
 }
 
 /**
+ * Filters out <think>...</think> blocks from text
+ * @param {string} text - The text to filter
+ * @returns {string} - The filtered text
+ */
+function filterThinkBlocks(text) {
+  return text.replace(/<think>[\s\S]*?<\/think>/g, '');
+}
+
+/**
  * Adds a bot message to the chat interface
  * @param {string} message - The message text
  */
@@ -1675,7 +1684,9 @@ function addBotMessage(message) {
   messageContent.className = 'message-content';
   
   try {
-    messageContent.innerHTML = marked.parse(message);
+    // Filter out think blocks before parsing markdown
+    const filteredMessage = filterThinkBlocks(message);
+    messageContent.innerHTML = marked.parse(filteredMessage);
   } catch (e) {
     console.error("Error parsing markdown:", e);
     messageContent.textContent = message;
