@@ -379,7 +379,7 @@ window.onload = function() {
               await Excel.run(async (context) => {
                 console.log("Getting selected range");
                 const range = context.workbook.getSelectedRange();
-                range.load(["address", "values", "formulas"]);
+                range.load(["address", "values", "formulas", "columnCount", "rowCount", "columnIndex", "rowIndex"]);
                 await context.sync();
                 
                 const newRange = range.address;
@@ -742,63 +742,122 @@ async function getDocumentContent() {
       }
       
       if (officeAppType === Office.HostType.Excel) {
-        // Find all range references in the message
-        const message = messageInput.value;
-        const rangeMatches = message.match(/\[([^\]]+)\]/g);
-        
-        if (!rangeMatches || rangeMatches.length === 0) {
-          resolve("");
-          return;
-        }
-        
-        let content = "";
-        
-        // Process each range
-        for (const rangeMatch of rangeMatches) {
-          const rangeText = rangeMatch.slice(1, -1); // Remove brackets
-          const rangeData = rangeDataMap.get(rangeText);
-          
-          if (rangeData) {
-            // Format the content using the stored data
-            content += `## Range ${rangeData.address}:\n\n`;
-            
-            // Add values
-            if (rangeData.values) {
-              content += "Values:\n";
-              for (const row of rangeData.values) {
-                content += row.map(cell => cell === null ? "" : cell).join("\t") + "\n";
-              }
-              content += "\n";
-            }
-            
-            // Add formulas if they differ from values
-            if (rangeData.formulas) {
-              let hasFormulas = false;
-              for (let i = 0; i < rangeData.formulas.length; i++) {
-                for (let j = 0; j < rangeData.formulas[i].length; j++) {
-                  if (rangeData.formulas[i][j] !== rangeData.values[i][j]) {
-                    hasFormulas = true;
-                    break;
+        // Wrap the Excel case in an async IIFE to handle await
+        (async () => {
+          // First, get all workbook data if document access is allowed
+          let workbookContent = "";
+          if (docContentCheckbox && docContentCheckbox.checked) {
+            try {
+              await Excel.run(async (context) => {
+                // Get all worksheets
+                const sheets = context.workbook.worksheets;
+                sheets.load("items/name");
+                await context.sync();
+
+                // Process each worksheet
+                for (const sheet of sheets.items) {
+                  workbookContent += `\n## Sheet: ${sheet.name}\n\n`;
+                  
+                  // Get the used range of the sheet
+                  const usedRange = sheet.getUsedRange();
+                  usedRange.load(["address", "values", "formulas", "columnCount", "rowCount", "columnIndex", "rowIndex"]);
+                  await context.sync();
+
+                  // Get the starting cell address
+                  const startCell = usedRange.address.split(':')[0];
+                  const [startCol, startRow] = [startCell.match(/[A-Z]+/)[0], parseInt(startCell.match(/\d+/)[0])];
+
+                  // Add values with cell addresses
+                  if (usedRange.values) {
+                    workbookContent += "Cell Contents:\n";
+                    for (let i = 0; i < usedRange.values.length; i++) {
+                      for (let j = 0; j < usedRange.values[i].length; j++) {
+                        const value = usedRange.values[i][j];
+                        if (value !== null && value !== "") {
+                          // Calculate cell address using absolute column/row
+                          const colIndex = usedRange.columnIndex + j;
+                          const rowIndex = usedRange.rowIndex + i;
+                          const cellAddress = `${getColumnLetter(colIndex)}${rowIndex + 1}`;
+                          // Get formula if it exists and differs from value
+                          const formula = usedRange.formulas[i][j];
+                          const hasFormula = formula && formula !== value && formula.startsWith('=');
+                          if (hasFormula) {
+                            workbookContent += `${cellAddress}: ${formula}\n`;
+                          } else {
+                            workbookContent += `${cellAddress}: ${value}\n`;
+                          }
+                        }
+                      }
+                    }
+                    workbookContent += "\n";
                   }
                 }
-                if (hasFormulas) break;
-              }
+              });
+            } catch (error) {
+              console.error("Error getting workbook content:", error);
+              workbookContent += "Error: Could not access workbook content.\n\n";
+            }
+          }
+
+          // Then process any specific range references in the message
+          const message = messageInput.value;
+          const rangeMatches = message.match(/\[([^\]]+)\]/g);
+          
+          let content = workbookContent; // Start with workbook content
+          
+          // Process each range if there are any
+          if (rangeMatches && rangeMatches.length > 0) {
+            content += "\n## Selected Ranges:\n\n";
+            
+            for (const rangeMatch of rangeMatches) {
+              const rangeText = rangeMatch.slice(1, -1); // Remove brackets
+              const rangeData = rangeDataMap.get(rangeText);
               
-              if (hasFormulas) {
-                content += "Formulas:\n";
-                for (const row of rangeData.formulas) {
-                  content += row.map(cell => cell === null ? "" : cell).join("\t") + "\n";
+              if (rangeData) {
+                // Format the content using the stored data
+                content += `### Range ${rangeData.address}:\n\n`;
+                
+                // Get the starting cell address
+                const startCell = rangeData.address.split(':')[0];
+                // We'll need to estimate the column and row index for the selected range
+                // For simplicity, assume rangeData.address is like 'D5:F7'
+                const colLetter = startCell.match(/[A-Z]+/)[0];
+                const rowNum = parseInt(startCell.match(/\d+/)[0]);
+                const colIndex = columnLetterToIndex(colLetter);
+                
+                // Add values with cell addresses
+                if (rangeData.values) {
+                  content += "Cell Contents:\n";
+                  for (let i = 0; i < rangeData.values.length; i++) {
+                    for (let j = 0; j < rangeData.values[i].length; j++) {
+                      const value = rangeData.values[i][j];
+                      if (value !== null && value !== "") {
+                        // Calculate cell address using absolute column/row
+                        const absColIndex = colIndex + j;
+                        const absRowIndex = rowNum + i - 1;
+                        const cellAddress = `${getColumnLetter(absColIndex)}${absRowIndex + 1}`;
+                        // Get formula if it exists and differs from value
+                        const formula = rangeData.formulas[i][j];
+                        const hasFormula = formula && formula !== value && formula.startsWith('=');
+                        if (hasFormula) {
+                          content += `${cellAddress}: ${formula}\n`;
+                        } else {
+                          content += `${cellAddress}: ${value}\n`;
+                        }
+                      }
+                    }
+                  }
+                  content += "\n";
                 }
-                content += "\n";
+              } else {
+                console.warn("No stored data found for range:", rangeText);
+                content += `Error: Could not access range ${rangeText}\n\n`;
               }
             }
-          } else {
-            console.warn("No stored data found for range:", rangeText);
-            content += `Error: Could not access range ${rangeText}\n\n`;
           }
-        }
-        
-        resolve(content);
+          
+          resolve(content);
+        })();
       } else if (officeAppType === Office.HostType.Word) {
         // Get Word document content
         Word.run(async (context) => {
@@ -1883,7 +1942,7 @@ function formatConversationForAPI(history, documentContent = "") {
   
   // Add document content if available
   if (documentContent) {
-    let prefix = "# Attached document:\n";
+    let prefix = "# Attached full document:\n";
     if (officeAppType === Office.HostType.PowerPoint) {
       prefix = "# Attached slide:\n";
     }
@@ -2036,4 +2095,34 @@ function debugListPresentationFiles() {
   } catch (error) {
     console.error("Error in debugListPresentationFiles:", error);
   }
+}
+
+/**
+ * Gets the column letter based on 0-based column index
+ * @param {number} colIndex - The 0-based column index (0 = A)
+ * @returns {string} - The resulting column letter
+ */
+function getColumnLetter(colIndex) {
+  let result = '';
+  colIndex = Math.floor(colIndex);
+  colIndex += 1; // 1-based for Excel
+  while (colIndex > 0) {
+    const remainder = (colIndex - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    colIndex = Math.floor((colIndex - 1) / 26);
+  }
+  return result;
+}
+
+/**
+ * Converts a column letter (e.g., 'A', 'AB') to a 0-based column index
+ * @param {string} colLetter
+ * @returns {number}
+ */
+function columnLetterToIndex(colLetter) {
+  let col = 0;
+  for (let i = 0; i < colLetter.length; i++) {
+    col = col * 26 + (colLetter.charCodeAt(i) - 64);
+  }
+  return col - 1;
 }
