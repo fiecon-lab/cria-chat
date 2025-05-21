@@ -486,10 +486,10 @@ function configureDocContentCheckbox() {
     docContentCheckbox.disabled = false;
     if (docContentLabel) {
       docContentLabel.style.color = '';
-      docContentLabel.textContent = 'Allow access to the document';
+      docContentLabel.textContent = 'Allow read access to selected cells';
     }
     if (docAccessHint) {
-      docAccessHint.textContent = 'Check "Allow access to the document" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
+      docAccessHint.textContent = 'Check "Allow read access to selected cells" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
     }
   } else if (officeAppType === Office.HostType.Word) {
     // Enable the checkbox in Word
@@ -590,7 +590,7 @@ docContentCheckbox.addEventListener('change', function() {
       if (officeAppType === Office.HostType.PowerPoint) {
         docAccessHint.textContent = 'Check to include slide content. For best results, select specific text on the slide.';
       } else if (officeAppType === Office.HostType.Excel) {
-        docAccessHint.textContent = 'Check "Allow access to the document" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
+        docAccessHint.textContent = 'Check "Allow read access to selected cells" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
       } else {
         docAccessHint.textContent = 'Check "Allow access to the document" to include document content in your conversation.';
       }
