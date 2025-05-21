@@ -486,10 +486,10 @@ function configureDocContentCheckbox() {
     docContentCheckbox.disabled = false;
     if (docContentLabel) {
       docContentLabel.style.color = '';
-      docContentLabel.textContent = 'Allow read access to selected cells';
+      docContentLabel.textContent = 'Allow access to selected cells';
     }
     if (docAccessHint) {
-      docAccessHint.textContent = 'Check "Allow read access to selected cells" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
+      docAccessHint.textContent = 'Check "Allow access to selected cells" to include selected cells in your conversation. You can type cell ranges in brackets, e.g. [A1] or [B2:D4].';
     }
   } else if (officeAppType === Office.HostType.Word) {
     // Enable the checkbox in Word
